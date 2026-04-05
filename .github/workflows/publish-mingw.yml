@@ -1,0 +1,155 @@
+name: Publish mingwX64
+
+on:
+  workflow_dispatch:
+    inputs:
+      skiko_version:
+        description: 'Skiko version (must be published first)'
+        required: false
+        default: '0.144.5'
+
+jobs:
+  publish-compose-mingw:
+    name: 'Publish Compose mingwX64'
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Setup Prerequisites
+        uses: ./.github/actions/setup-prerequisites
+
+      - name: Read versions from libraryversions.toml
+        id: versions
+        shell: bash
+        run: |
+          read_ver() { grep "^$1 = " libraryversions.toml | head -1 | sed 's/.*= "\(.*\)"/\1/'; }
+          echo "COMPOSE=$(read_ver COMPOSE)" >> $GITHUB_OUTPUT
+          echo "COMPOSE_MATERIAL3=$(read_ver COMPOSE_MATERIAL3)" >> $GITHUB_OUTPUT
+          echo "COMPOSE_MATERIAL3_ADAPTIVE=$(read_ver COMPOSE_MATERIAL3_ADAPTIVE)" >> $GITHUB_OUTPUT
+          echo "LIFECYCLE=$(read_ver LIFECYCLE)" >> $GITHUB_OUTPUT
+          echo "NAVIGATION=$(read_ver NAVIGATION)" >> $GITHUB_OUTPUT
+          echo "NAVIGATION3=$(read_ver NAVIGATION3)" >> $GITHUB_OUTPUT
+          echo "NAVIGATIONEVENT=$(read_ver NAVIGATIONEVENT)" >> $GITHUB_OUTPUT
+          echo "SAVEDSTATE=$(read_ver SAVEDSTATE)" >> $GITHUB_OUTPUT
+          echo "WINDOW=$(read_ver WINDOW)" >> $GITHUB_OUTPUT
+
+      - name: Download Skiko mingwX64 from artifact or mavenLocal
+        shell: bash
+        run: |
+          echo "Assuming Skiko ${{ github.event.inputs.skiko_version }} is already in mavenLocal or remote repo"
+
+      - name: Publish base modules (annotation, collection, savedstate)
+        shell: bash
+        run: |
+          VERSION_PROPS="-Pjetbrains.publication.version.COMPOSE=${{ steps.versions.outputs.COMPOSE }} \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3=${{ steps.versions.outputs.COMPOSE_MATERIAL3 }} \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3_ADAPTIVE=${{ steps.versions.outputs.COMPOSE_MATERIAL3_ADAPTIVE }} \
+            -Pjetbrains.publication.version.LIFECYCLE=${{ steps.versions.outputs.LIFECYCLE }} \
+            -Pjetbrains.publication.version.NAVIGATION=${{ steps.versions.outputs.NAVIGATION }} \
+            -Pjetbrains.publication.version.NAVIGATION_3=${{ steps.versions.outputs.NAVIGATION3 }} \
+            -Pjetbrains.publication.version.NAVIGATION_EVENT=${{ steps.versions.outputs.NAVIGATIONEVENT }} \
+            -Pjetbrains.publication.version.SAVEDSTATE=${{ steps.versions.outputs.SAVEDSTATE }} \
+            -Pjetbrains.publication.version.WINDOW=${{ steps.versions.outputs.WINDOW }}"
+          PLAT="-Pandroidx.enabled.kmp.target.platforms=-js,-wasm,-android_native,-linux,+windows"
+
+          ./gradlew --no-daemon --no-configuration-cache $VERSION_PROPS $PLAT \
+            :annotation:annotation:publishMingwX64PublicationToMavenLocal \
+            :collection:collection:publishMingwX64PublicationToMavenLocal \
+            :savedstate:savedstate:publishMingwX64PublicationToMavenLocal \
+            :savedstate:savedstate-compose:publishMingwX64PublicationToMavenLocal
+
+          python3 gen_root_modules.py
+
+      - name: Publish lifecycle + navigation
+        shell: bash
+        run: |
+          VERSION_PROPS="-Pjetbrains.publication.version.COMPOSE=${{ steps.versions.outputs.COMPOSE }} \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3=${{ steps.versions.outputs.COMPOSE_MATERIAL3 }} \
+            -Pjetbrains.publication.version.LIFECYCLE=${{ steps.versions.outputs.LIFECYCLE }} \
+            -Pjetbrains.publication.version.NAVIGATION=${{ steps.versions.outputs.NAVIGATION }} \
+            -Pjetbrains.publication.version.NAVIGATION_EVENT=${{ steps.versions.outputs.NAVIGATIONEVENT }} \
+            -Pjetbrains.publication.version.SAVEDSTATE=${{ steps.versions.outputs.SAVEDSTATE }}"
+          PLAT="-Pandroidx.enabled.kmp.target.platforms=-js,-wasm,-android_native,-linux,+windows"
+
+          ./gradlew --no-daemon --no-configuration-cache $VERSION_PROPS $PLAT \
+            :lifecycle:lifecycle-common:publishMingwX64PublicationToMavenLocal \
+            :lifecycle:lifecycle-runtime:publishMingwX64PublicationToMavenLocal \
+            :lifecycle:lifecycle-viewmodel:publishMingwX64PublicationToMavenLocal \
+            :lifecycle:lifecycle-viewmodel-savedstate:publishMingwX64PublicationToMavenLocal \
+            :lifecycle:lifecycle-runtime-compose:publishMingwX64PublicationToMavenLocal \
+            :lifecycle:lifecycle-viewmodel-compose:publishMingwX64PublicationToMavenLocal \
+            :navigationevent:navigationevent-compose:publishMingwX64PublicationToMavenLocal
+
+          python3 gen_root_modules.py
+
+      - name: Publish compose core
+        shell: bash
+        run: |
+          VERSION_PROPS="-Pjetbrains.publication.version.COMPOSE=${{ steps.versions.outputs.COMPOSE }} \
+            -Pjetbrains.publication.version.LIFECYCLE=${{ steps.versions.outputs.LIFECYCLE }} \
+            -Pjetbrains.publication.version.SAVEDSTATE=${{ steps.versions.outputs.SAVEDSTATE }}"
+          PLAT="-Pandroidx.enabled.kmp.target.platforms=-js,-wasm,-android_native,-linux,+windows"
+
+          ./gradlew --no-daemon --no-configuration-cache $VERSION_PROPS $PLAT \
+            :compose:runtime:runtime:publishMingwX64PublicationToMavenLocal \
+            :compose:runtime:runtime-saveable:publishMingwX64PublicationToMavenLocal \
+            :compose:ui:ui-util:publishMingwX64PublicationToMavenLocal \
+            :compose:ui:ui-geometry:publishMingwX64PublicationToMavenLocal \
+            :compose:ui:ui-unit:publishMingwX64PublicationToMavenLocal \
+            :compose:ui:ui-graphics:publishMingwX64PublicationToMavenLocal \
+            :compose:ui:ui-text:publishMingwX64PublicationToMavenLocal \
+            :compose:ui:ui-backhandler:publishMingwX64PublicationToMavenLocal \
+            :compose:ui:ui:publishMingwX64PublicationToMavenLocal \
+            :compose:animation:animation-core:publishMingwX64PublicationToMavenLocal \
+            :compose:animation:animation:publishMingwX64PublicationToMavenLocal \
+            :compose:foundation:foundation-layout:publishMingwX64PublicationToMavenLocal \
+            :compose:foundation:foundation:publishMingwX64PublicationToMavenLocal
+
+          python3 gen_root_modules.py
+
+      - name: Publish navigation + material
+        shell: bash
+        run: |
+          VERSION_PROPS="-Pjetbrains.publication.version.COMPOSE=${{ steps.versions.outputs.COMPOSE }} \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3=${{ steps.versions.outputs.COMPOSE_MATERIAL3 }} \
+            -Pjetbrains.publication.version.LIFECYCLE=${{ steps.versions.outputs.LIFECYCLE }} \
+            -Pjetbrains.publication.version.NAVIGATION=${{ steps.versions.outputs.NAVIGATION }} \
+            -Pjetbrains.publication.version.SAVEDSTATE=${{ steps.versions.outputs.SAVEDSTATE }}"
+          PLAT="-Pandroidx.enabled.kmp.target.platforms=-js,-wasm,-android_native,-linux,+windows"
+
+          ./gradlew --no-daemon --no-configuration-cache $VERSION_PROPS $PLAT \
+            :navigation:navigation-common:publishMingwX64PublicationToMavenLocal \
+            :navigation:navigation-runtime:publishMingwX64PublicationToMavenLocal \
+            :navigation:navigation-compose:publishMingwX64PublicationToMavenLocal \
+            :compose:material:material-ripple:publishMingwX64PublicationToMavenLocal \
+            :compose:material3:material3:publishMingwX64PublicationToMavenLocal
+
+          python3 gen_root_modules.py
+
+      - name: Run publishComposeJbToMavenLocal
+        shell: bash
+        run: |
+          VERSION_PROPS="-Pjetbrains.publication.version.COMPOSE=${{ steps.versions.outputs.COMPOSE }} \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3=${{ steps.versions.outputs.COMPOSE_MATERIAL3 }} \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3_ADAPTIVE=${{ steps.versions.outputs.COMPOSE_MATERIAL3_ADAPTIVE }} \
+            -Pjetbrains.publication.version.LIFECYCLE=${{ steps.versions.outputs.LIFECYCLE }} \
+            -Pjetbrains.publication.version.NAVIGATION=${{ steps.versions.outputs.NAVIGATION }} \
+            -Pjetbrains.publication.version.NAVIGATION_3=${{ steps.versions.outputs.NAVIGATION3 }} \
+            -Pjetbrains.publication.version.NAVIGATION_EVENT=${{ steps.versions.outputs.NAVIGATIONEVENT }} \
+            -Pjetbrains.publication.version.SAVEDSTATE=${{ steps.versions.outputs.SAVEDSTATE }} \
+            -Pjetbrains.publication.version.WINDOW=${{ steps.versions.outputs.WINDOW }}"
+          PLAT="-Pandroidx.enabled.kmp.target.platforms=-js,-wasm,-android_native,-linux,+windows"
+
+          ./gradlew --no-daemon --no-configuration-cache $VERSION_PROPS $PLAT \
+            -Pcompose.platforms=mingw \
+            :mpp:publishComposeJbToMavenLocal
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-mingwx64-${{ steps.versions.outputs.COMPOSE }}
+          path: |
+            ~/.m2/repository/org/jetbrains/compose/
+            ~/.m2/repository/org/jetbrains/androidx/
+          retention-days: 30

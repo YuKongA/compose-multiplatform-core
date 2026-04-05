@@ -36,6 +36,7 @@ androidXMultiplatform {
     jvm()
     mac()
     linux()
+    mingwX64()
     ios()
     android()
 
@@ -108,11 +109,17 @@ androidXMultiplatform {
             dependsOn(commonTest)
         }
 
+        create("unixMain").dependsOn(nativeMain)
+
         darwinMain {
-            dependsOn(nativeMain)
+            dependsOn(unixMain)
         }
 
         linuxMain {
+            dependsOn(unixMain)
+        }
+
+        mingwMain {
             dependsOn(nativeMain)
         }
 
@@ -124,6 +131,8 @@ androidXMultiplatform {
                         dependsOn(darwinMain)
                     } else if (konanTargetFamily == Family.LINUX) {
                         dependsOn(linuxMain)
+                    } else if (konanTargetFamily == Family.MINGW) {
+                        dependsOn(mingwMain)
                     } else {
                         throw new GradleException("unknown native target ${target}")
                     }

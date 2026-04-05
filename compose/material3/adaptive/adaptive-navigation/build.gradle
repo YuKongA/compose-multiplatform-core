@@ -39,6 +39,7 @@ androidXMultiplatform {
     }
     desktop()
     mac()
+    mingwX64()
     ios()
     js()
     wasmJs()
@@ -48,8 +49,8 @@ androidXMultiplatform {
     sourceSets {
         commonMain.dependencies {
             api(project(":compose:material3:adaptive:adaptive-layout"))
-            implementation("org.jetbrains.compose.foundation:foundation:1.10.0")
-            implementation("org.jetbrains.compose.ui:ui-util:1.10.0")
+            implementation("org.jetbrains.compose.foundation:foundation:1.11.0-alpha04")
+            implementation("org.jetbrains.compose.ui:ui-util:1.11.0-alpha04")
         }
 
         androidMain.dependencies {

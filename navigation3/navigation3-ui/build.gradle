@@ -41,6 +41,7 @@ androidXMultiplatform {
     }
     desktop()
     mac()
+    mingwX64()
     ios()
     js()
     wasmJs()
@@ -53,11 +54,11 @@ androidXMultiplatform {
 
         commonMain.dependencies {
             api("androidx.navigation3:navigation3-runtime:$navigation3Version")
-            api("org.jetbrains.androidx.navigationevent:navigationevent-compose:1.0.1")
-            api("org.jetbrains.compose.animation:animation:1.10.0")
-            api("org.jetbrains.compose.runtime:runtime:1.10.0")
-            api("org.jetbrains.compose.runtime:runtime-saveable:1.10.0")
-            api("org.jetbrains.compose.ui:ui:1.10.0")
+            api("org.jetbrains.androidx.navigationevent:navigationevent-compose:1.1.0-alpha01")
+            api("org.jetbrains.compose.animation:animation:1.11.0-alpha04")
+            api("org.jetbrains.compose.runtime:runtime:1.11.0-alpha04")
+            api("org.jetbrains.compose.runtime:runtime-saveable:1.11.0-alpha04")
+            api("org.jetbrains.compose.ui:ui:1.11.0-alpha04")
             api("androidx.savedstate:savedstate:1.4.0")
             api("androidx.savedstate:savedstate-compose:1.4.0")
             implementation("androidx.annotation:annotation:1.9.1")

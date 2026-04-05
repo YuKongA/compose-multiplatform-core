@@ -36,6 +36,7 @@ androidXMultiplatform {
     jvm()
     mac()
     linux()
+    mingwX64()
     ios()
     android()
 
@@ -101,6 +102,10 @@ androidXMultiplatform {
             dependsOn(nativeMain)
         }
 
+        mingwMain {
+            dependsOn(nativeMain)
+        }
+
         targets.configureEach { target ->
             if (target.platformType == KotlinPlatformType.native) {
                 target.compilations["main"].defaultSourceSet {
@@ -109,6 +114,8 @@ androidXMultiplatform {
                         dependsOn(darwinMain)
                     } else if (konanTargetFamily == Family.LINUX) {
                         dependsOn(linuxMain)
+                    } else if (konanTargetFamily == Family.MINGW) {
+                        dependsOn(mingwMain)
                     } else {
                         throw new GradleException("unknown native target ${target}")
                     }

@@ -60,7 +60,7 @@ androidXMultiplatform {
         }
 
         androidDeviceTest.dependencies {
-            implementation("androidx.lifecycle:lifecycle-runtime:2.9.2")
+            implementation("androidx.lifecycle:lifecycle-runtime:2.11.0-alpha01")
             implementation(libs.testExtJunit)
             implementation(libs.testCore)
             implementation(libs.testRunner)

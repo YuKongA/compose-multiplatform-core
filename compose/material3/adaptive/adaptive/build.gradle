@@ -40,6 +40,7 @@ androidXMultiplatform {
     }
     desktop()
     mac()
+    mingwX64()
     ios()
     js()
     wasmJs()
@@ -48,8 +49,8 @@ androidXMultiplatform {
 
     sourceSets {
         commonMain.dependencies {
-            implementation("org.jetbrains.compose.foundation:foundation:1.10.0")
-            implementation("org.jetbrains.compose.ui:ui:1.10.0")
+            implementation("org.jetbrains.compose.foundation:foundation:1.11.0-alpha04")
+            implementation("org.jetbrains.compose.ui:ui:1.11.0-alpha04")
             api("org.jetbrains.androidx.window:window-core:1.5.0")
         }
 

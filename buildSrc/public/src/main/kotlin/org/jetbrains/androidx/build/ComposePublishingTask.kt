@@ -66,14 +66,25 @@ open class ComposePublishingTask : DefaultTask() {
                 project.hasRedirection(it)
             }
 
-        // To make ArtifactRedirection publishing work properly with kotlin >= 1.9.0,
-        // we use decorated `KotlinMultiplatform` publication named - 'KotlinMultiplatformDecorated'.
-        // see AndroidXComposeMultiplatformExtensionImpl.publishAndroidxReference for details.
-        if (useArtifactRedirectionPublication) {
-            val kotlinCommonPublicationName = "${ComposePlatforms.KotlinMultiplatform.name}Decorated"
-            dependsOnComposeTask("${component.path}:publish${kotlinCommonPublicationName}PublicationTo$repository")
-        } else {
-            dependsOnComposeTask("${component.path}:publish${ComposePlatforms.KotlinMultiplatform.name}PublicationTo$repository")
+        // Skip metadata publication when only publishing native-only platforms (e.g., mingwX64)
+        // that don't have metadata compilation support for all required targets.
+        val hasNonNativeOnlyPlatform = targetPlatforms.any {
+            it != ComposePlatforms.MingwX64 && it != ComposePlatforms.LinuxX64 &&
+            it != ComposePlatforms.LinuxArm64 && it != ComposePlatforms.KotlinMultiplatform
+        }
+        val publishMetadata = hasNonNativeOnlyPlatform ||
+            ComposePlatforms.KotlinMultiplatform in targetPlatforms
+
+        if (publishMetadata) {
+            // To make ArtifactRedirection publishing work properly with kotlin >= 1.9.0,
+            // we use decorated `KotlinMultiplatform` publication named - 'KotlinMultiplatformDecorated'.
+            // see AndroidXComposeMultiplatformExtensionImpl.publishAndroidxReference for details.
+            if (useArtifactRedirectionPublication) {
+                val kotlinCommonPublicationName = "${ComposePlatforms.KotlinMultiplatform.name}Decorated"
+                dependsOnComposeTask("${component.path}:publish${kotlinCommonPublicationName}PublicationTo$repository")
+            } else {
+                dependsOnComposeTask("${component.path}:publish${ComposePlatforms.KotlinMultiplatform.name}PublicationTo$repository")
+            }
         }
 
         for (platform in component.supportedPlatforms) {
