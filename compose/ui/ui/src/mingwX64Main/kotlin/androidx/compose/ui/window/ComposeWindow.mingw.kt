@@ -293,7 +293,7 @@ internal class ComposeWindow(
                 1 // Prevent background erase — eliminates flicker on resize
             }
             WM_SIZE -> {
-                skiaLayer.needRender()
+                skiaLayer.renderImmediately()
                 0
             }
             WM_PAINT -> {
