@@ -19,6 +19,7 @@ package androidx.compose.ui.window
 import platform.windows.PostQuitMessage
 import platform.windows.SetProcessDPIAware
 import org.jetbrains.skiko.SkikoDispatchers
+import org.jetbrains.skiko.preloadAngleEgl
 import org.jetbrains.skiko.runMainMessageLoop
 
 interface ApplicationScope {
@@ -46,6 +47,10 @@ fun application(content: ApplicationScope.() -> Unit) {
     // Declare DPI awareness so Windows does not bitmap-scale the window.
     // Without this, 4K displays render at 96 DPI and stretch, causing blurriness.
     SetProcessDPIAware()
+
+    // Preload ANGLE EGL/GLES DLLs and pre-initialize EGL display/context
+    // before window creation to reduce startup latency.
+    preloadAngleEgl()
 
     // Inject our Win32 message-loop-based dispatcher as Dispatchers.Main.
     // This is needed because kotlinx.coroutines doesn't provide a built-in Main

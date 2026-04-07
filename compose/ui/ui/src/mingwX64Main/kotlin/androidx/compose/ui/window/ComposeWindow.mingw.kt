@@ -239,12 +239,16 @@ internal class ComposeWindow(
         val dpiScale = skiaLayer.systemDpiScale
         val windowWidth = (size.width.value * dpiScale).toInt()
         val windowHeight = (size.height.value * dpiScale).toInt()
+        val screenW = platform.windows.GetSystemMetrics(platform.windows.SM_CXSCREEN)
+        val screenH = platform.windows.GetSystemMetrics(platform.windows.SM_CYSCREEN)
+        val posX = (screenW - windowWidth) / 2
+        val posY = (screenH - windowHeight) / 2
         hwnd = CreateWindowExW(
             0u,
             COMPOSE_WINDOW_CLASS,
             title,
             WS_OVERLAPPEDWINDOW.toUInt(),
-            CW_USEDEFAULT, CW_USEDEFAULT,
+            posX, posY,
             windowWidth, windowHeight,
             null, null, hInstance, null
         ) ?: error("CreateWindowExW failed")
