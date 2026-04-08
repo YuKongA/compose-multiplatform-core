@@ -94,6 +94,7 @@ import platform.windows.WM_PAINT
 import platform.windows.WM_RBUTTONDOWN
 import platform.windows.WM_RBUTTONUP
 import platform.windows.WM_SETFOCUS
+import platform.windows.WM_MOVE
 import platform.windows.WM_SIZE
 import platform.windows.WM_SYSKEYDOWN
 import platform.windows.WM_SYSKEYUP
@@ -296,7 +297,7 @@ internal class ComposeWindow(
             WM_ERASEBKGND -> {
                 1 // Prevent background erase — eliminates flicker on resize
             }
-            WM_SIZE -> {
+            WM_SIZE, WM_MOVE -> {
                 skiaLayer.renderImmediately()
                 0
             }

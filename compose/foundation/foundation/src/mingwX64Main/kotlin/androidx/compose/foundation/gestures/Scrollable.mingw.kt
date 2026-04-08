@@ -27,7 +27,9 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFold
+import kotlin.math.abs
 
 internal actual fun platformScrollableDefaultFlingBehavior(): ScrollableDefaultFlingBehavior =
     DefaultFlingBehavior(
@@ -49,17 +51,37 @@ private object WindowsScrollConfig : ScrollConfig {
     override var isSmoothScrollingEnabled = true
         internal set
 
-    override fun isPreciseWheelScroll(event: PointerEvent): Boolean = false
+    override fun isPreciseWheelScroll(event: PointerEvent): Boolean {
+        // Windows 10+ precision touchpads send fractional WHEEL_DELTA values,
+        // while regular mice always send exact multiples of WHEEL_DELTA (delta = ±1.0 per notch).
+        // Detect precision by checking for sub-notch (fractional) scroll deltas.
+        val delta = event.totalScrollDelta
+        val absY = abs(delta.y)
+        val absX = abs(delta.x)
+        return (absY > 0f && absY < 1f) || (absX > 0f && absX < 1f)
+    }
 
     override fun Density.calculateMouseWheelScroll(event: PointerEvent, bounds: IntSize): Offset {
         if (event.type == PointerEventType.PanMove) {
             return -event.changes.fastFold(Offset.Zero) { acc, c -> acc + c.panOffset }
         }
 
-        return Offset(
-            x = event.totalScrollDelta.x * (bounds.width / 20f),
-            y = event.totalScrollDelta.y * (bounds.height / 20f)
-        ) * -1f
+        val totalDelta = event.totalScrollDelta
+        return if (isPreciseWheelScroll(event)) {
+            // Precision touchpad: use fixed dp multiplier for smooth pixel-level scrolling
+            // (matches macOS behavior where trackpad deltas use a small fixed multiplier)
+            val multiplier = 10.dp.toPx()
+            Offset(
+                x = totalDelta.x * multiplier,
+                y = totalDelta.y * multiplier
+            ) * -1f
+        } else {
+            // Regular mouse wheel: scale relative to viewport size (1 notch = 5% of viewport)
+            Offset(
+                x = totalDelta.x * (bounds.width / 20f),
+                y = totalDelta.y * (bounds.height / 20f)
+            ) * -1f
+        }
     }
 }
 
